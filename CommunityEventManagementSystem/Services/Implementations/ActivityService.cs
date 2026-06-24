@@ -9,57 +9,63 @@ public class ActivityService : IActivityService
 {
     private readonly IActivityRepository _activityRepository;
 
-    public ActivityService(
-        IActivityRepository activityRepository)
+    public ActivityService(IActivityRepository activityRepository)
     {
-        _activityRepository = activityRepository;
+        _activityRepository = activityRepository ?? throw new ArgumentNullException(nameof(activityRepository));
     }
 
-    public async Task<IEnumerable<ActivityDetailsDto>>
-        GetAllActivitiesAsync()
+    public async Task<ActivityDetailsDto?> GetActivityByIdAsync(int id)
     {
-        var activities =
-            await _activityRepository.GetAllAsync();
-
-        return activities
-            .OrderBy(a => a.Name)
-            .Select(MapToDto);
+        var activity = await _activityRepository.GetByIdAsync(id);
+        return activity == null ? null : MapToDetailsDto(activity);
     }
 
-    public async Task CreateActivityAsync(
-        CreateActivityDto dto)
+    public async Task<ActivityDetailsDto?> GetActivityByNameAsync(string name)
     {
-        var activity =
-            new Activity(
-                dto.Name,
-                dto.ActivityType);
+        var activity = await _activityRepository.GetByNameAsync(name);
+        return activity == null ? null : MapToDetailsDto(activity);
+    }
 
+    public async Task<IEnumerable<ActivityDetailsDto>> GetAllActivitiesAsync()
+    {
+        var activities = await _activityRepository.GetAllAsync();
+        return activities.Select(MapToDetailsDto);
+    }
+
+    public async Task<IEnumerable<ActivityDetailsDto>> GetActivitiesByEventAsync(int eventId)
+    {
+        var activities = await _activityRepository.GetActivitiesByEventAsync(eventId);
+        return activities.Select(MapToDetailsDto);
+    }
+
+    public async Task<ActivityDetailsDto> CreateActivityAsync(CreateActivityDto dto)
+    {
+        var activity = new Activity(dto.Name, dto.Description);
         await _activityRepository.AddAsync(activity);
-        await _activityRepository.SaveChangesAsync();
+        return MapToDetailsDto(activity);
     }
 
-    public async Task DeleteActivityAsync(int id)
+    public async Task<ActivityDetailsDto> UpdateActivityAsync(int id, CreateActivityDto dto)
     {
-        var activity =
-            await _activityRepository.GetByIdAsync(id);
+        var activity = await _activityRepository.GetByIdAsync(id);
+        if (activity == null)
+            throw new KeyNotFoundException($"Activity {id} not found.");
 
-        if (activity is null)
-        {
-            throw new ArgumentException(
-                "Activity not found.");
-        }
-
-        _activityRepository.Delete(activity);
-        await _activityRepository.SaveChangesAsync();
+        activity.UpdateDetails(dto.Name, dto.Description);
+        await _activityRepository.UpdateAsync(activity);
+        return MapToDetailsDto(activity);
     }
 
-    private static ActivityDetailsDto MapToDto(Activity activity)
+    public async Task<bool> DeleteActivityAsync(int id)
     {
-        return new ActivityDetailsDto
-        {
-            Id = activity.Id,
-            Name = activity.Name,
-            ActivityType = activity.ActivityType
-        };
+        return await _activityRepository.DeleteAsync(id);
     }
+
+    private ActivityDetailsDto MapToDetailsDto(Activity activity) => new()
+    {
+        Id = activity.Id,
+        Name = activity.Name,
+        Description = activity.Description,
+        CreatedDate = activity.CreatedDate
+    };
 }

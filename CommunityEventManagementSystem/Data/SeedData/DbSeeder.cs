@@ -1,89 +1,56 @@
 using CommunityEventManagementSystem.Domain.Entities;
-using CommunityEventManagementSystem.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace CommunityEventManagementSystem.Data.SeedData;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(
-        ApplicationDbContext context)
+    public static async Task SeedAsync(ApplicationDbContext context)
     {
-        await context.Database.MigrateAsync();
-
-        if (await context.Venues.AnyAsync())
-        {
+        if (await context.Events.AnyAsync())
             return;
-        }
 
-        var venues = new[]
+        var venues = new List<Venue>
         {
-            new Venue("City Community Hall", "12 High Street, Sunderland", 500),
-            new Venue("Riverside Park Pavilion", "45 River Road, Sunderland", 200),
-            new Venue("Library Conference Room", "88 Library Lane, Sunderland", 80)
+            new("City Convention Center", "123 Main St, Downtown", 500),
+            new("Community Park Pavilion", "456 Park Ave, North Side", 200),
+            new("University Auditorium", "789 College Rd, Campus", 300),
+            new("Riverside Garden", "321 River Ln, Waterfront", 150)
         };
 
-        var activities = new[]
+        var activities = new List<Activity>
         {
-            new Activity("Creative Writing Workshop", ActivityType.Workshop),
-            new Activity("Community Health Talk", ActivityType.Talk),
-            new Activity("Family Fun Games", ActivityType.Game),
-            new Activity("Local Business Networking", ActivityType.Networking),
-            new Activity("Charity Fundraiser", ActivityType.CommunityService)
+            new("Networking", "Connect with community members and professionals"),
+            new("Workshop", "Educational sessions and skill development"),
+            new("Entertainment", "Live performances and cultural activities"),
+            new("Sports", "Athletic competitions and outdoor games"),
+            new("Charity", "Community service and fundraising activities")
         };
 
         await context.Venues.AddRangeAsync(venues);
         await context.Activities.AddRangeAsync(activities);
         await context.SaveChangesAsync();
 
-        var participants = new[]
+        var events = new List<Event>
         {
-            new Participant("Alice", "Johnson", "alice.j@email.com", "+447700900001"),
-            new Participant("Ben", "Smith", "ben.s@email.com", "+447700900002"),
-            new Participant("Chloe", "Williams", "chloe.w@email.com", "+447700900003")
+            new("Community Fair 2026", new DateOnly(2026, 7, 15), new TimeOnly(10, 0),
+                "Annual community celebration with food, games, and entertainment", 300),
+            new("Tech Meetup", new DateOnly(2026, 8, 1), new TimeOnly(18, 30),
+                "Professional networking event for tech enthusiasts", 150),
+            new("Charity Marathon", new DateOnly(2026, 8, 22), new TimeOnly(6, 0),
+                "5K marathon to support local food bank", 500),
+            new("Summer Concert Series", new DateOnly(2026, 8, 28), new TimeOnly(19, 0),
+                "Live music performances in the park", 200)
         };
 
-        await context.Participants.AddRangeAsync(participants);
+        await context.Events.AddRangeAsync(events);
         await context.SaveChangesAsync();
 
-        var communityFair = new Event(
-            "Summer Community Fair",
-            DateOnly.FromDateTime(DateTime.Today.AddDays(14)),
-            new TimeOnly(10, 0),
-            "A family-friendly community fair with workshops, talks, and games for all ages.",
-            150);
-
-        communityFair.SetVenues(new[] { venues[0].Id, venues[1].Id });
-        communityFair.SetActivities(new[]
+        foreach (var evt in events)
         {
-            activities[0].Id,
-            activities[2].Id,
-            activities[4].Id
-        });
-
-        var healthSeminar = new Event(
-            "Health & Wellness Seminar",
-            DateOnly.FromDateTime(DateTime.Today.AddDays(21)),
-            new TimeOnly(14, 0),
-            "Expert talks on nutrition, mental health, and community wellbeing.",
-            80);
-
-        healthSeminar.SetVenues(new[] { venues[2].Id });
-        healthSeminar.SetActivities(new[]
-        {
-            activities[1].Id,
-            activities[3].Id
-        });
-
-        await context.Events.AddRangeAsync(
-            communityFair,
-            healthSeminar);
-
-        await context.SaveChangesAsync();
-
-        await context.Registrations.AddRangeAsync(
-            new Registration(participants[0].Id, communityFair.Id),
-            new Registration(participants[1].Id, communityFair.Id));
+            evt.SetVenues(venues.Take(2).Select(v => v.Id));
+            evt.SetActivities(activities.Take(3).Select(a => a.Id));
+        }
 
         await context.SaveChangesAsync();
     }

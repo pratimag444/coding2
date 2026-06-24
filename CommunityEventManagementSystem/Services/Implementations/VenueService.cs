@@ -9,41 +9,64 @@ public class VenueService : IVenueService
 {
     private readonly IVenueRepository _venueRepository;
 
-    public VenueService(
-        IVenueRepository venueRepository)
+    public VenueService(IVenueRepository venueRepository)
     {
-        _venueRepository = venueRepository;
+        _venueRepository = venueRepository ?? throw new ArgumentNullException(nameof(venueRepository));
     }
 
-    public async Task<IEnumerable<VenueDetailsDto>>
-        GetAllVenuesAsync()
+    public async Task<VenueDetailsDto?> GetVenueByIdAsync(int id)
     {
-        var venues =
-            await _venueRepository.GetAllAsync();
-
-        return venues.Select(v =>
-            new VenueDetailsDto
-            {
-                Id = v.Id,
-                Name = v.Name,
-                Address = v.Address,
-                Capacity = v.Capacity
-            });
+        var venue = await _venueRepository.GetByIdAsync(id);
+        return venue == null ? null : MapToDetailsDto(venue);
     }
 
-    public async Task CreateVenueAsync(
-        CreateVenueDto dto)
+    public async Task<VenueDetailsDto?> GetVenueByNameAsync(string name)
     {
-        var venue =
-            new Venue(
-                dto.Name,
-                dto.Address,
-                dto.Capacity);
-
-        await _venueRepository
-            .AddAsync(venue);
-
-        await _venueRepository
-            .SaveChangesAsync();
+        var venue = await _venueRepository.GetByNameAsync(name);
+        return venue == null ? null : MapToDetailsDto(venue);
     }
+
+    public async Task<IEnumerable<VenueDetailsDto>> GetAllVenuesAsync()
+    {
+        var venues = await _venueRepository.GetAllAsync();
+        return venues.Select(MapToDetailsDto);
+    }
+
+    public async Task<IEnumerable<VenueDetailsDto>> GetVenuesByCapacityAsync(int minimumCapacity)
+    {
+        var venues = await _venueRepository.GetVenuesByCapacityAsync(minimumCapacity);
+        return venues.Select(MapToDetailsDto);
+    }
+
+    public async Task<VenueDetailsDto> CreateVenueAsync(CreateVenueDto dto)
+    {
+        var venue = new Venue(dto.Name, dto.Address, dto.Capacity);
+        await _venueRepository.AddAsync(venue);
+        return MapToDetailsDto(venue);
+    }
+
+    public async Task<VenueDetailsDto> UpdateVenueAsync(int id, CreateVenueDto dto)
+    {
+        var venue = await _venueRepository.GetByIdAsync(id);
+        if (venue == null)
+            throw new KeyNotFoundException($"Venue {id} not found.");
+
+        venue.UpdateDetails(dto.Name, dto.Address, dto.Capacity);
+        await _venueRepository.UpdateAsync(venue);
+        return MapToDetailsDto(venue);
+    }
+
+    public async Task<bool> DeleteVenueAsync(int id)
+    {
+        return await _venueRepository.DeleteAsync(id);
+    }
+
+    private VenueDetailsDto MapToDetailsDto(Venue venue) => new()
+    {
+        Id = venue.Id,
+        Name = venue.Name,
+        Address = venue.Address,
+        Capacity = venue.Capacity,
+        CreatedDate = venue.CreatedDate
+    };
 }

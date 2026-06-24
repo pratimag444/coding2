@@ -2,18 +2,17 @@
 
 namespace CommunityEventManagementSystem.Repositories.Interfaces;
 
-public interface IParticipantRepository
-    : IGenericRepository<Participant>
+/// <summary>
+/// Specialized repository for Participant entity.
+/// </summary>
+public interface IParticipantRepository : IGenericRepository<Participant>
 {
-    Task<Participant?> GetByEmailAsync(
-        string email);
+    /// <summary>Gets participant by email asynchronously.</summary>
+    Task<Participant?> GetByEmailAsync(string email);
 
-    Task<Participant?> GetParticipantWithRegistrationsAsync(
-        int id);
+    /// <summary>Gets participants registered for a specific event.</summary>
+    Task<IEnumerable<Participant>> GetParticipantsByEventAsync(int eventId);
 
-    Task<IEnumerable<Participant>>
-        GetMostActiveParticipantsAsync();
-
-    Task<IEnumerable<Participant>>
-        GetAllWithRegistrationsAsync();
+    /// <summary>Gets participant with all registrations.</summary>
+    Task<Participant?> GetParticipantWithRegistrationsAsync(int participantId);
 }

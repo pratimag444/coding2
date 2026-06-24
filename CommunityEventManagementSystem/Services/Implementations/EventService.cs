@@ -1,9 +1,8 @@
 ﻿using CommunityEventManagementSystem.Domain.Entities;
 using CommunityEventManagementSystem.DTOs;
-using CommunityEventManagementSystem.Exceptions;
 using CommunityEventManagementSystem.Repositories.Interfaces;
 using CommunityEventManagementSystem.Services.Interfaces;
-using CommunityEventManagementSystem.Services.Strategies;
+using Microsoft.Extensions.Logging;
 
 namespace CommunityEventManagementSystem.Services.Implementations;
 
@@ -11,224 +10,78 @@ public class EventService : IEventService
 {
     private readonly IEventRepository _eventRepository;
 
-    public EventService(
-        IEventRepository eventRepository)
+    public EventService(IEventRepository eventRepository)
     {
-        _eventRepository = eventRepository;
+        _eventRepository = eventRepository ?? throw new ArgumentNullException(nameof(eventRepository));
     }
 
-    public async Task<IEnumerable<EventDetailsDto>>
-        GetAllEventsAsync()
+    public async Task<EventDetailsDto?> GetEventByIdAsync(int id)
     {
-        var events =
-            await _eventRepository
-                .GetAllWithDetailsAsync();
-
-        return events.Select(MapToDto);
+        var evt = await _eventRepository.GetEventWithDetailsAsync(id);
+        return evt == null ? null : MapToDetailsDto(evt);
     }
 
-    public async Task<EventDetailsDto?>
-        GetEventByIdAsync(int id)
+    public async Task<IEnumerable<EventDetailsDto>> GetAllEventsAsync()
     {
-        var eventEntity =
-            await _eventRepository
-                .GetEventWithDetailsAsync(id);
-
-        return eventEntity is null
-            ? null
-            : MapToDto(eventEntity);
+        var events = await _eventRepository.GetAllAsync();
+        return events.Select(MapToDetailsDto);
     }
 
-    public async Task<IEnumerable<EventDetailsDto>>
-        GetUpcomingEventsAsync()
+    public async Task<IEnumerable<EventDetailsDto>> GetUpcomingEventsAsync()
     {
-        var events =
-            await _eventRepository
-                .GetUpcomingEventsAsync();
-
-        return events.Select(MapToDto);
+        var events = await _eventRepository.GetUpcomingEventsAsync();
+        return events.Select(MapToDetailsDto);
     }
 
-    public async Task<IEnumerable<EventDetailsDto>>
-        GetEventsByDateAsync(DateOnly date)
-    {
-        var events =
-            await _eventRepository
-                .GetEventsByDateAsync(date);
-
-        return events.Select(MapToDto);
+    public async Task<IEnumerable<EventDetailsDto>> GetEventsByVenueAsync(int venueId)
+    {\n var events = await _eventRepository.GetEventsByVenueAsync(venueId);
+        return events.Select(MapToDetailsDto);
     }
 
-    public async Task<IEnumerable<EventDetailsDto>>
-        SearchEventsAsync(string searchTerm)
+    public async Task<IEnumerable<EventDetailsDto>> GetEventsByActivityAsync(int activityId)
     {
-        if (string.IsNullOrWhiteSpace(searchTerm))
-        {
-            return Enumerable.Empty<EventDetailsDto>();
-        }
-
-        var events =
-            await _eventRepository
-                .SearchEventsAsync(searchTerm);
-
-        return events.Select(MapToDto);
+        var events = await _eventRepository.GetEventsByActivityAsync(activityId);
+        return events.Select(MapToDetailsDto);
     }
 
-    public async Task<IEnumerable<EventDetailsDto>>
-        FilterEventsAsync(
-            DateOnly? date,
-            int? venueId,
-            int? activityId,
-            string? searchTerm,
-            bool upcomingOnly = false)
+    public async Task<IEnumerable<EventDetailsDto>> GetEventsByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
-        var events =
-            await _eventRepository
-                .GetAllWithDetailsAsync();
-
-        IEnumerable<Event> filtered = events;
-
-        if (upcomingOnly)
-        {
-            filtered = filtered.Where(
-                e => e.EventDate >= DateOnly.FromDateTime(DateTime.Today));
-        }
-
-        if (date.HasValue)
-        {
-            filtered = new DateEventFilterStrategy(date.Value)
-                .Filter(filtered);
-        }
-
-        if (venueId is > 0)
-        {
-            filtered = new VenueEventFilterStrategy(venueId.Value)
-                .Filter(filtered);
-        }
-
-        if (activityId is > 0)
-        {
-            filtered = new ActivityEventFilterStrategy(activityId.Value)
-                .Filter(filtered);
-        }
-
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            filtered = filtered.Where(
-                e => e.Name.Contains(
-                        searchTerm,
-                        StringComparison.OrdinalIgnoreCase)
-                    || e.Description.Contains(
-                        searchTerm,
-                        StringComparison.OrdinalIgnoreCase));
-        }
-
-        return filtered.Select(MapToDto);
+        var events = await _eventRepository.GetEventsByDateRangeAsync(startDate, endDate);
+        return events.Select(MapToDetailsDto);
     }
 
-    public async Task<EventDetailsDto?>
-        GetMostPopularEventAsync()
+    public async Task<EventDetailsDto> CreateEventAsync(CreateEventDto dto)
     {
-        var eventEntity =
-            await _eventRepository
-                .GetMostPopularEventAsync();
-
-        return eventEntity is null
-            ? null
-            : MapToDto(eventEntity);
+        var evt = new Event(dto.Name, dto.EventDate, dto.EventTime, dto.Description, dto.MaximumParticipants);
+        await _eventRepository.AddAsync(evt);
+        return MapToDetailsDto(evt);
     }
 
-    public async Task CreateEventAsync(
-        CreateEventDto dto)
+    public async Task<EventDetailsDto> UpdateEventAsync(int id, UpdateEventDto dto)
     {
-        if (dto.EventDate <
-            DateOnly.FromDateTime(DateTime.Today))
-        {
-            throw new ArgumentException(
-                "Event date cannot be in the past.");
-        }
+        var evt = await _eventRepository.GetByIdAsync(id);
+        if (evt == null)
+            throw new KeyNotFoundException($\"Event {id} not found.\");
 
-        var eventEntity =
-            new Event(
-                dto.Name,
-                dto.EventDate,
-                dto.EventTime,
-                dto.Description,
-                dto.MaximumParticipants);
-
-        eventEntity.SetVenues(dto.VenueIds);
-        eventEntity.SetActivities(dto.ActivityIds);
-
-        await _eventRepository.AddAsync(eventEntity);
-        await _eventRepository.SaveChangesAsync();
+        evt.UpdateDetails(dto.Name, dto.EventDate, dto.EventTime, dto.Description, dto.MaximumParticipants);
+        await _eventRepository.UpdateAsync(evt);
+        return MapToDetailsDto(evt);
     }
 
-    public async Task UpdateEventAsync(
-        UpdateEventDto dto)
+    public async Task<bool> DeleteEventAsync(int id)
     {
-        var eventEntity =
-            await _eventRepository
-                .GetEventWithDetailsAsync(dto.Id);
-
-        if (eventEntity is null)
-        {
-            throw new EventNotFoundException(dto.Id);
-        }
-
-        eventEntity.UpdateDetails(
-            dto.Name,
-            dto.EventDate,
-            dto.EventTime,
-            dto.Description,
-            dto.MaximumParticipants);
-
-        eventEntity.SetVenues(dto.VenueIds);
-        eventEntity.SetActivities(dto.ActivityIds);
-
-        _eventRepository.Update(eventEntity);
-        await _eventRepository.SaveChangesAsync();
+        return await _eventRepository.DeleteAsync(id);
     }
 
-    public async Task DeleteEventAsync(int id)
+    private EventDetailsDto MapToDetailsDto(Event evt) => new()
     {
-        var eventEntity =
-            await _eventRepository
-                .GetEventWithDetailsAsync(id);
-
-        if (eventEntity is null)
-        {
-            throw new EventNotFoundException(id);
-        }
-
-        _eventRepository.Delete(eventEntity);
-        await _eventRepository.SaveChangesAsync();
-    }
-
-    private static EventDetailsDto MapToDto(Event e)
-    {
-        return new EventDetailsDto
-        {
-            Id = e.Id,
-            Name = e.Name,
-            EventDate = e.EventDate,
-            EventTime = e.EventTime,
-            Description = e.Description,
-            RegistrationCount = e.GetRegistrationCount(),
-            MaximumParticipants = e.MaximumParticipants,
-            VenueIds = e.EventVenues
-                .Select(ev => ev.VenueId)
-                .ToList(),
-            ActivityIds = e.EventActivities
-                .Select(ea => ea.ActivityId)
-                .ToList(),
-            VenueNames = e.EventVenues
-                .Where(ev => ev.Venue is not null)
-                .Select(ev => ev.Venue!.Name)
-                .ToList(),
-            ActivityNames = e.EventActivities
-                .Where(ea => ea.Activity is not null)
-                .Select(ea => ea.Activity!.Name)
-                .ToList()
-        };
-    }
+        Id = evt.Id,
+        Name = evt.Name,
+        EventDate = evt.EventDate,
+        EventTime = evt.EventTime,
+        Description = evt.Description,
+        MaximumParticipants = evt.MaximumParticipants,
+        RegisteredCount = evt.GetRegistrationCount(),
+        CreatedDate = evt.CreatedDate
+    };
 }

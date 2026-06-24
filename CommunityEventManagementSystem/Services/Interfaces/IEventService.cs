@@ -4,41 +4,13 @@ namespace CommunityEventManagementSystem.Services.Interfaces;
 
 public interface IEventService
 {
-    Task<IEnumerable<EventDetailsDto>>
-        GetAllEventsAsync();
-
-    Task<EventDetailsDto?>
-        GetEventByIdAsync(
-            int id);
-
-    Task<IEnumerable<EventDetailsDto>>
-        GetUpcomingEventsAsync();
-
-    Task<IEnumerable<EventDetailsDto>>
-        GetEventsByDateAsync(
-            DateOnly date);
-
-    Task<IEnumerable<EventDetailsDto>>
-        SearchEventsAsync(
-            string searchTerm);
-
-    Task<IEnumerable<EventDetailsDto>>
-        FilterEventsAsync(
-            DateOnly? date,
-            int? venueId,
-            int? activityId,
-            string? searchTerm,
-            bool upcomingOnly = false);
-
-    Task<EventDetailsDto?>
-        GetMostPopularEventAsync();
-
-    Task CreateEventAsync(
-        CreateEventDto dto);
-
-    Task UpdateEventAsync(
-        UpdateEventDto dto);
-
-    Task DeleteEventAsync(
-        int id);
+    Task<EventDetailsDto?> GetEventByIdAsync(int id);
+    Task<IEnumerable<EventDetailsDto>> GetAllEventsAsync();
+    Task<IEnumerable<EventDetailsDto>> GetUpcomingEventsAsync();
+    Task<IEnumerable<EventDetailsDto>> GetEventsByVenueAsync(int venueId);
+    Task<IEnumerable<EventDetailsDto>> GetEventsByActivityAsync(int activityId);
+    Task<IEnumerable<EventDetailsDto>> GetEventsByDateRangeAsync(DateOnly startDate, DateOnly endDate);
+    Task<EventDetailsDto> CreateEventAsync(CreateEventDto dto);
+    Task<EventDetailsDto> UpdateEventAsync(int id, UpdateEventDto dto);
+    Task<bool> DeleteEventAsync(int id);
 }

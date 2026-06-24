@@ -288,3 +288,4 @@ C:\Users\HP\source\repos\CommunityEventManagementSystem\CommunityEventManagement
 C:\Users\HP\source\repos\CommunityEventManagementSystem\CommunityEventManagementSystem\CommunityEventManagementSystem\obj\Debug\net8.0\CommunityEventManagementSystem.genruntimeconfig.cache
 C:\Users\HP\source\repos\CommunityEventManagementSystem\CommunityEventManagementSystem\CommunityEventManagementSystem\obj\Debug\net8.0\ref\CommunityEventManagementSystem.dll
 C:\Users\HP\source\repos\CommunityEventManagementSystem\CommunityEventManagementSystem\CommunityEventManagementSystem\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\HP\source\repos\CommunityEventManagementSystem\CommunityEventManagementSystem\CommunityEventManagementSystem\obj\Debug\net8.0\CommunityEventManagementSystem.sourcelink.json

@@ -5,53 +5,37 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommunityEventManagementSystem.Repositories.Implementations;
 
-public class ParticipantRepository
-    : GenericRepository<Participant>,
-      IParticipantRepository
+public class ParticipantRepository : GenericRepository<Participant>, IParticipantRepository
 {
-    private readonly ApplicationDbContext _context;
+    public ParticipantRepository(ApplicationDbContext context) : base(context) { }
 
-    public ParticipantRepository(
-        ApplicationDbContext context)
-        : base(context)
+    public async Task<Participant?> GetByEmailAsync(string email)
     {
-        _context = context;
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email cannot be empty.", nameof(email));
+
+        return await _dbSet.AsNoTracking().FirstOrDefaultAsync(p => p.Email == email);
     }
 
-    public async Task<Participant?> GetByEmailAsync(
-        string email)
+    public async Task<IEnumerable<Participant>> GetParticipantsByEventAsync(int eventId)
     {
-        return await _context.Participants
-            .FirstOrDefaultAsync(
-                p => p.Email == email);
-    }
+        if (eventId <= 0)
+            throw new ArgumentException("Event ID must be greater than zero.", nameof(eventId));
 
-    public async Task<Participant?> GetParticipantWithRegistrationsAsync(
-        int id)
-    {
-        return await _context.Participants
-            .Include(p => p.Registrations)
-            .FirstOrDefaultAsync(
-                p => p.Id == id);
-    }
-
-    public async Task<IEnumerable<Participant>>
-        GetMostActiveParticipantsAsync()
-    {
-        return await _context.Participants
-            .Include(p => p.Registrations)
-            .OrderByDescending(
-                p => p.Registrations.Count)
-            .Take(10)
+        return await _dbSet
+            .AsNoTracking()
+            .Where(p => p.Registrations.Any(r => r.EventId == eventId))
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Participant>>
-        GetAllWithRegistrationsAsync()
+    public async Task<Participant?> GetParticipantWithRegistrationsAsync(int participantId)
     {
-        return await _context.Participants
+        if (participantId <= 0)
+            throw new ArgumentException("Participant ID must be greater than zero.", nameof(participantId));
+
+        return await _dbSet
+            .AsNoTracking()
             .Include(p => p.Registrations)
-            .OrderBy(p => p.LastName)
-            .ToListAsync();
+            .FirstOrDefaultAsync(p => p.Id == participantId);
     }
 }

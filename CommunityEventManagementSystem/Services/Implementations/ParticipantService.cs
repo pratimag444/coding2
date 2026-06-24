@@ -9,135 +9,65 @@ public class ParticipantService : IParticipantService
 {
     private readonly IParticipantRepository _participantRepository;
 
-    public ParticipantService(
-        IParticipantRepository participantRepository)
+    public ParticipantService(IParticipantRepository participantRepository)
     {
-        _participantRepository = participantRepository;
+        _participantRepository = participantRepository ?? throw new ArgumentNullException(nameof(participantRepository));
     }
 
-    public async Task<IEnumerable<ParticipantDetailsDto>>
-        GetAllParticipantsAsync()
+    public async Task<ParticipantDetailsDto?> GetParticipantByIdAsync(int id)
     {
-        var participants =
-            await _participantRepository
-                .GetAllWithRegistrationsAsync();
-
-        return participants.Select(MapToDto);
+        var participant = await _participantRepository.GetByIdAsync(id);
+        return participant == null ? null : MapToDetailsDto(participant);
     }
 
-    public async Task<ParticipantDetailsDto?>
-      GetParticipantByIdAsync(
-          int id)
+    public async Task<ParticipantDetailsDto?> GetParticipantByEmailAsync(string email)
     {
-        var participant =
-            await _participantRepository
-                .GetParticipantWithRegistrationsAsync(id);
-
-        return participant is null
-            ? null
-            : MapToDto(participant);
+        var participant = await _participantRepository.GetByEmailAsync(email);
+        return participant == null ? null : MapToDetailsDto(participant);
     }
 
-    public async Task<IEnumerable<ParticipantDetailsDto>>
-        GetMostActiveParticipantsAsync()
+    public async Task<IEnumerable<ParticipantDetailsDto>> GetAllParticipantsAsync()
     {
-        var participants =
-            await _participantRepository
-                .GetMostActiveParticipantsAsync();
-
-        return participants.Select(MapToDto);
+        var participants = await _participantRepository.GetAllAsync();
+        return participants.Select(MapToDetailsDto);
     }
 
-    public async Task<int>
-        GetTotalParticipantsAsync()
+    public async Task<IEnumerable<ParticipantDetailsDto>> GetParticipantsByEventAsync(int eventId)
     {
-        var participants =
-            await _participantRepository.GetAllAsync();
-
-        return participants.Count();
+        var participants = await _participantRepository.GetParticipantsByEventAsync(eventId);
+        return participants.Select(MapToDetailsDto);
     }
 
-    public async Task CreateParticipantAsync(
-        CreateParticipantDto dto)
+    public async Task<ParticipantDetailsDto> CreateParticipantAsync(CreateParticipantDto dto)
     {
-        var participant =
-            new Participant(
-                dto.FirstName,
-                dto.LastName,
-                dto.Email,
-                dto.PhoneNumber);
-
-        await _participantRepository
-            .AddAsync(participant);
-
-        await _participantRepository
-            .SaveChangesAsync();
+        var participant = new Participant(dto.FirstName, dto.LastName, dto.Email, dto.PhoneNumber);
+        await _participantRepository.AddAsync(participant);
+        return MapToDetailsDto(participant);
     }
 
-    public async Task UpdateParticipantAsync(
-        UpdateParticipantDto dto)
+    public async Task<ParticipantDetailsDto> UpdateParticipantAsync(int id, UpdateParticipantDto dto)
     {
-        var participant =
-            await _participantRepository
-                .GetByIdAsync(dto.Id);
+        var participant = await _participantRepository.GetByIdAsync(id);
+        if (participant == null)
+            throw new KeyNotFoundException($\"Participant {id} not found.\");
 
-        if (participant is null)
-        {
-            throw new Exception(
-                "Participant not found.");
-        }
-
-        participant.UpdateDetails(
-            dto.FirstName,
-            dto.LastName,
-            dto.Email,
-            dto.PhoneNumber);
-
-        _participantRepository.Update(
-            participant);
-
-        await _participantRepository
-            .SaveChangesAsync();
+        participant.UpdateDetails(dto.FirstName, dto.LastName, dto.Email, dto.PhoneNumber);
+        await _participantRepository.UpdateAsync(participant);
+        return MapToDetailsDto(participant);
     }
 
-    public async Task DeleteParticipantAsync(
-        int id)
+    public async Task<bool> DeleteParticipantAsync(int id)
     {
-        var participant =
-            await _participantRepository
-                .GetByIdAsync(id);
-
-        if (participant is null)
-            return;
-
-
-        _participantRepository.Delete(
-            participant);
-
-        await _participantRepository
-            .SaveChangesAsync();
+        return await _participantRepository.DeleteAsync(id);
     }
 
-    private static ParticipantDetailsDto
-        MapToDto(
-            Participant participant)
+    private ParticipantDetailsDto MapToDetailsDto(Participant participant) => new()
     {
-        return new ParticipantDetailsDto
-        {
-            Id = participant.Id,
-
-            FullName =
-                $"{participant.FirstName} {participant.LastName}",
-
-            Email = participant.Email,
-
-            PhoneNumber =
-                participant.PhoneNumber,
-
-            RegistrationCount =
-                participant.Registrations
-                    .Count(r => r.Status
-                        != Domain.Enums.RegistrationStatus.Cancelled)
-        };
-    }
+        Id = participant.Id,
+        FirstName = participant.FirstName,
+        LastName = participant.LastName,
+        Email = participant.Email,
+        PhoneNumber = participant.PhoneNumber,
+        CreatedDate = participant.CreatedDate
+    };
 }

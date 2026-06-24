@@ -1,0 +1,169 @@
+﻿@page "/reports"
+
+@using CommunityEventManagementSystem.Services.Interfaces
+
+@inject IEventService EventService
+@inject IParticipantService ParticipantService
+@inject IRegistrationService RegistrationService
+
+<PageTitle>Reports</PageTitle>
+
+<div class="container-fluid">
+
+    <h1 class="fw-bold mb-4">
+        Reports & Analytics
+    </h1>
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body text-center">
+
+                    <h6>Total Events</h6>
+
+                    <h1 class="text-primary">
+                        @totalEvents
+                    </h1>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body text-center">
+
+                    <h6>Total Participants</h6>
+
+                    <h1 class="text-success">
+                        @totalParticipants
+                    </h1>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body text-center">
+
+                    <h6>Total Registrations</h6>
+
+                    <h1 class="text-warning">
+                        @totalRegistrations
+                    </h1>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body text-center">
+
+                    <h6>Most Popular Event</h6>
+
+                    <h5 class="text-danger">
+                        @mostPopularEvent
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="card shadow border-0 mt-4">
+
+    <div class="card-header bg-dark text-white">
+
+        <h5 class="mb-0">
+            Strategy Pattern Demonstration
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <p>
+            The Community Event Management System
+            implements the Strategy Design Pattern
+            to support flexible event filtering.
+        </p>
+
+        <ul>
+
+            <li>DateEventFilterStrategy</li>
+
+            <li>VenueEventFilterStrategy</li>
+
+            <li>ActivityEventFilterStrategy</li>
+
+        </ul>
+
+        <div class="alert alert-success">
+
+            Different filtering algorithms can be
+            selected at runtime without modifying
+            the Event Service implementation.
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    private int totalEvents;
+
+    private int totalParticipants;
+
+    private int totalRegistrations;
+
+    private string mostPopularEvent = "N/A";
+
+    protected override async Task OnInitializedAsync()
+    {
+        totalEvents =
+            (await EventService
+                .GetAllEventsAsync())
+            .Count();
+
+        totalParticipants =
+            await ParticipantService
+                .GetTotalParticipantsAsync();
+
+        totalRegistrations =
+            await RegistrationService
+                .GetTotalRegistrationsAsync();
+
+        var popularEvent =
+            await EventService
+                .GetMostPopularEventAsync();
+
+        if (popularEvent is not null)
+        {
+            mostPopularEvent =
+                popularEvent.Name;
+        }
+    }
+}

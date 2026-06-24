@@ -1,0 +1,258 @@
+﻿@page "/events/edit/{Id:int}"
+
+@using CommunityEventManagementSystem.DTOs
+@using CommunityEventManagementSystem.Services.Interfaces
+
+@inject IEventService EventService
+@inject IVenueService VenueService
+@inject IActivityService ActivityService
+@inject NavigationManager Navigation
+
+<div class="container mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header bg-warning text-dark">
+            <h2 class="mb-0">
+                Edit Event
+            </h2>
+        </div>
+
+        <div class="card-body">
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    @errorMessage
+                </div>
+            }
+
+            <EditForm Model="eventDto"
+                      OnValidSubmit="UpdateEvent">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Event Name
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="eventDto.Name" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Event Date
+                    </label>
+
+                    <InputDate class="form-control"
+                               @bind-Value="eventDto.EventDate" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Event Time
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="timeString" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Description
+                    </label>
+
+                    <InputTextArea class="form-control"
+                                   rows="4"
+                                   @bind-Value="eventDto.Description" />
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label class="form-label fw-bold">
+                        Maximum Participants
+                    </label>
+
+                    <InputNumber class="form-control"
+                                 @bind-Value="eventDto.MaximumParticipants" />
+
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Venues</label>
+                    <div class="row">
+                        @foreach (var venue in venues)
+                        {
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           checked="@eventDto.VenueIds.Contains(venue.Id)"
+                                           @onchange="e => ToggleVenue(venue.Id, e)" />
+                                    <label class="form-check-label">@venue.Name</label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Activities</label>
+                    <div class="row">
+                        @foreach (var activity in activities)
+                        {
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           checked="@eventDto.ActivityIds.Contains(activity.Id)"
+                                           @onchange="e => ToggleActivity(activity.Id, e)" />
+                                    <label class="form-check-label">@activity.Name</label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success">
+
+                    Save Changes
+
+                </button>
+
+                <a href="/events"
+                   class="btn btn-secondary ms-2">
+
+                    Cancel
+
+                </a>
+
+            </EditForm>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private UpdateEventDto eventDto = new();
+
+    private string timeString = "09:00";
+
+    private string errorMessage = string.Empty;
+
+    private IEnumerable<VenueDetailsDto> venues = Enumerable.Empty<VenueDetailsDto>();
+    private IEnumerable<ActivityDetailsDto> activities = Enumerable.Empty<ActivityDetailsDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        venues = await VenueService.GetAllVenuesAsync();
+        activities = await ActivityService.GetAllActivitiesAsync();
+
+        var existingEvent =
+            await EventService
+                .GetEventByIdAsync(Id);
+
+        if (existingEvent is null)
+        {
+            errorMessage = "Event not found.";
+            return;
+        }
+
+        eventDto.Id =
+            existingEvent.Id;
+
+        eventDto.Name =
+            existingEvent.Name;
+
+        eventDto.EventDate =
+            existingEvent.EventDate;
+
+        eventDto.Description =
+            existingEvent.Description;
+
+        eventDto.MaximumParticipants =
+            existingEvent.MaximumParticipants;
+
+        eventDto.VenueIds = existingEvent.VenueIds.ToList();
+        eventDto.ActivityIds = existingEvent.ActivityIds.ToList();
+
+        timeString =
+            existingEvent.EventTime
+                .ToString("HH:mm");
+    }
+
+    private void ToggleVenue(int venueId, ChangeEventArgs e)
+    {
+        var isChecked = (bool?)e.Value == true;
+
+        if (isChecked && !eventDto.VenueIds.Contains(venueId))
+        {
+            eventDto.VenueIds.Add(venueId);
+        }
+        else if (!isChecked)
+        {
+            eventDto.VenueIds.Remove(venueId);
+        }
+    }
+
+    private void ToggleActivity(int activityId, ChangeEventArgs e)
+    {
+        var isChecked = (bool?)e.Value == true;
+
+        if (isChecked && !eventDto.ActivityIds.Contains(activityId))
+        {
+            eventDto.ActivityIds.Add(activityId);
+        }
+        else if (!isChecked)
+        {
+            eventDto.ActivityIds.Remove(activityId);
+        }
+    }
+
+    private async Task UpdateEvent()
+    {
+        if (!TimeOnly.TryParse(
+            timeString,
+            out var parsedTime))
+        {
+            errorMessage =
+                "Invalid time format.";
+
+            return;
+        }
+
+        eventDto.EventTime =
+            parsedTime;
+
+        try
+        {
+            await EventService
+                .UpdateEventAsync(eventDto);
+
+            Navigation.NavigateTo("/events");
+        }
+        catch (Exception ex)
+        {
+            errorMessage =
+                ex.Message;
+        }
+    }
+}

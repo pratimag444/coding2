@@ -1,0 +1,379 @@
+﻿@page "/participants"
+
+@using CommunityEventManagementSystem.DTOs
+@using CommunityEventManagementSystem.Services.Interfaces
+
+@inject IParticipantService ParticipantService
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h1 class="fw-bold mb-1">
+
+                <i class="bi bi-people-fill text-primary me-2"></i>
+
+                Participant Management
+
+            </h1>
+
+            <p class="text-muted mb-0">
+
+                Manage participants, registrations and community engagement.
+
+            </p>
+
+        </div>
+
+        <a href="/participants/create"
+           class="btn btn-primary btn-lg rounded-3 shadow-sm">
+
+            <i class="bi bi-person-plus-fill me-2"></i>
+
+            Add Participant
+
+        </a>
+
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+
+                <div class="card-body text-center">
+
+                    <i class="bi bi-people-fill display-5 text-primary"></i>
+
+                    <h6 class="text-muted mt-3">
+                        Total Participants
+                    </h6>
+
+                    <h1 class="fw-bold">
+                        @ParticipantCount
+                    </h1>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body text-center">
+
+                    <i class="bi bi-person-check-fill display-5 text-success"></i>
+
+                    <h6 class="text-muted mt-3">
+                        Active Participants
+                    </h6>
+
+                    <h1 class="fw-bold text-success">
+                        @ActiveParticipants
+                    </h1>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body text-center">
+
+                    <i class="bi bi-person-plus-fill display-5 text-warning"></i>
+
+                    <h6 class="text-muted mt-3">
+                        New Participants
+                    </h6>
+
+                    <h1 class="fw-bold text-warning">
+                        @NewParticipants
+                    </h1>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow border-0 mb-4">
+
+        <div class="card-body">
+
+            <div class="input-group">
+
+                <span class="input-group-text bg-white">
+
+                    <i class="bi bi-search"></i>
+
+                </span>
+
+                <input class="form-control form-control-lg border-start-0"
+                       placeholder="Search participant by name or email..."
+                       @bind="searchText" />
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow border-0">
+
+        <div class="card-body">
+
+            @if (participants == null)
+            {
+                <div class="text-center p-5">
+
+                    <div class="spinner-border text-primary">
+                    </div>
+
+                    <p class="mt-3">
+                        Loading participants...
+                    </p>
+
+                </div>
+            }
+            else if (!FilteredParticipants.Any())
+            {
+                <div class="alert alert-warning">
+                    No participants found.
+                </div>
+            }
+            else
+            {
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Registrations</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var participant in FilteredParticipants)
+                        {
+                            <tr>
+
+                                <td>
+                                    @participant.Id
+                                </td>
+
+                                <td class="fw-bold">
+                                    @participant.FullName
+                                </td>
+
+                                <td>
+                                    @participant.Email
+                                </td>
+
+                                <td>
+                                    @participant.PhoneNumber
+                                </td>
+
+                                <td>
+
+                                    <span class="badge bg-primary">
+                                        @participant.RegistrationCount
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    @if (participant.ParticipantCategory == "Highly Active")
+                                    {
+                                        <span class="badge bg-success">
+                                            Highly Active
+                                        </span>
+                                    }
+                                    else if (participant.ParticipantCategory == "Active")
+                                    {
+                                        <span class="badge bg-info">
+                                            Active
+                                        </span>
+                                    }
+                                    else if (participant.ParticipantCategory == "Occasional")
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Occasional
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            New
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+
+                                    @if (participant.IsActiveParticipant)
+                                    {
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            Inactive
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+                                    <a href="/participants/details/@participant.Id"
+                                       class="btn btn-sm btn-outline-primary me-1">
+                                        View
+                                    </a>
+
+                                    <td>
+
+    <div class="btn-group">
+
+        <a href="/participants/details/@participant.Id"
+           class="btn btn-sm btn-outline-primary">
+
+            <i class="bi bi-eye"></i>
+
+        </a>
+
+                                <td>
+
+                                    <div class="btn-group">
+
+                                        <a href="/participants/details/@participant.Id"
+                                           class="btn btn-sm btn-outline-primary">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </a>
+
+                                        <a href="/participants/edit/@participant.Id"
+                                           class="btn btn-sm btn-outline-warning">
+
+                                            <i class="bi bi-pencil-square"></i>
+
+                                        </a>
+
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => OpenDeleteModal(participant.Id)">
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </button>
+
+                                    </div>
+
+                                </td>
+
+        <button class="btn btn-sm btn-outline-danger"
+                @onclick="() => OpenDeleteModal(participant.Id)">
+
+            <i class="bi bi-trash"></i>
+
+        </button>
+
+    </div>
+
+</td>
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+            }
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    private bool showDeleteModal;
+
+    private int selectedParticipantId;
+
+    private void OpenDeleteModal(int id)
+    {
+        selectedParticipantId = id;
+        showDeleteModal = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        showDeleteModal = false;
+    }
+
+private IEnumerable<ParticipantDetailsDto>? participants;
+
+    private string searchText = string.Empty;
+
+    private int ParticipantCount =>
+        participants?.Count() ?? 0;
+
+    private int ActiveParticipants =>
+        participants?.Count(p => p.IsActiveParticipant) ?? 0;
+
+    private int NewParticipants =>
+        participants?.Count(p => p.ParticipantCategory == "New") ?? 0;
+
+    private IEnumerable<ParticipantDetailsDto>
+        FilteredParticipants =>
+        participants?
+            .Where(p =>
+                string.IsNullOrWhiteSpace(searchText)
+                ||
+                p.FullName.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase)
+                ||
+                p.Email.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase))
+        ??
+        Enumerable.Empty<ParticipantDetailsDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        participants =
+            await ParticipantService
+                .GetAllParticipantsAsync();
+    }
+
+
+}

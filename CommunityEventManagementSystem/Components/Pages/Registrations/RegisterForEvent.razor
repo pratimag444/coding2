@@ -1,0 +1,392 @@
+﻿@page "/registrations/register"
+
+@using CommunityEventManagementSystem.DTOs
+@using CommunityEventManagementSystem.Exceptions
+@using CommunityEventManagementSystem.Services.Interfaces
+
+@inject IRegistrationService RegistrationService
+@inject IParticipantService ParticipantService
+@inject IEventService EventService
+@inject NavigationManager Navigation
+
+<div class="container mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">
+                Register Participant For Event
+            </h2>
+        </div>
+
+        <div class="card-body">
+
+            @if (isSuccess)
+            {
+                <div class="alert alert-success shadow-sm">
+
+                    <h5>
+                        ✓ Registration Successful
+                    </h5>
+
+                    <p class="mb-0">
+                        Participant has been registered successfully.
+                    </p>
+
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(message) && !isSuccess)
+            {
+                <div class="alert alert-danger shadow-sm">
+                    @message
+                </div>
+            }
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label fw-bold">
+                        Participant
+                    </label>
+
+                    <select class="form-select form-select-lg"
+                            @bind="selectedParticipantId">
+
+                        <option value="0">
+                            Select Participant
+                        </option>
+
+                        @foreach (var participant in participants)
+                        {
+                            <option value="@participant.Id">
+                                @participant.FullName
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label fw-bold">
+                        Event
+                    </label>
+
+                    <select class="form-select form-select-lg"
+                            @bind="selectedEventId">
+
+                        <option value="0">
+                            Select Event
+                        </option>
+
+                        @foreach (var eventItem in events)
+                        {
+                            <option value="@eventItem.Id">
+                                @eventItem.Name
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            @if (SelectedParticipant is not null)
+            {
+                <div class="card border-0 bg-light mb-4">
+
+                    <div class="card-body">
+
+                        <h5 class="fw-bold">
+                            Participant Information
+                        </h5>
+
+                        <p>
+                            <strong>Name:</strong>
+                            @SelectedParticipant.FullName
+                        </p>
+
+                        <p>
+                            <strong>Email:</strong>
+                            @SelectedParticipant.Email
+                        </p>
+
+                        <p>
+                            <strong>Phone:</strong>
+                            @SelectedParticipant.PhoneNumber
+                        </p>
+
+                        <p>
+                            <strong>Category:</strong>
+                            @SelectedParticipant.ParticipantCategory
+                        </p>
+
+                    </div>
+
+                </div>
+            }
+
+            @if (SelectedEvent is not null)
+            {
+                <div class="card border-0 shadow-sm bg-light mt-3">
+
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            Event Information
+                        </h4>
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="row">
+
+                            <div class="col-md-6">
+
+                                <p>
+                                    <strong>Date:</strong>
+                                    @SelectedEvent.EventDate.ToString("dd MMM yyyy")
+                                </p>
+
+                                <p>
+                                    <strong>Time:</strong>
+                                    @SelectedEvent.EventTime
+                                </p>
+
+                                <p>
+                                    <strong>Description:</strong>
+                                    @SelectedEvent.Description
+                                </p>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <p>
+                                    <strong>Capacity:</strong>
+                                    @SelectedEvent.MaximumParticipants
+                                </p>
+
+                                <p>
+                                    <strong>Registered:</strong>
+                                    @SelectedEvent.RegistrationCount
+                                </p>
+
+                                <p>
+                                    <strong>Remaining Seats:</strong>
+                                    @SelectedEvent.RemainingSeats
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <hr />
+
+                        <h6>
+                            Capacity Utilisation
+                        </h6>
+
+                        <div class="progress mb-3">
+
+                            <div class="progress-bar"
+                                 role="progressbar"
+                                 style="width:@($"{SelectedEvent.OccupancyPercentage}%")">
+
+                                @($"{SelectedEvent.OccupancyPercentage:F0}%")
+
+                            </div>
+
+                        </div>
+
+                        @if (SelectedEvent.IsFull)
+                        {
+                            <div class="alert alert-danger">
+                                Event is Full. Registration unavailable.
+                            </div>
+                        }
+                        else if (SelectedEvent.OccupancyPercentage >= 80)
+                        {
+                            <div class="alert alert-warning">
+                                Event is almost full.
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+            @if (SelectedParticipant is not null &&
+                        SelectedEvent is not null)
+            {
+                <div class="card border-0 bg-success text-white mt-4">
+
+                    <div class="card-body">
+
+                        <h5>
+                            Registration Preview
+                        </h5>
+
+                        <p class="mb-1">
+                            Participant:
+                            <strong>
+                                @SelectedParticipant.FullName
+                            </strong>
+                        </p>
+
+                        <p class="mb-1">
+                            Event:
+                            <strong>
+                                @SelectedEvent.Name
+                            </strong>
+                        </p>
+
+                        <p class="mb-0">
+                            Status:
+                            <strong>
+                                Ready To Register
+                            </strong>
+                        </p>
+
+                    </div>
+
+                </div>
+            }
+
+            <div class="mt-4">
+
+                <button class="btn btn-success btn-lg"
+                        disabled="@isSaving || (SelectedEvent?.IsFull ?? false)"
+                        @onclick="RegisterParticipant">
+
+                    @if (isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2">
+                        </span>
+
+                        <span>
+                            Registering...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            Register Participant
+                        </span>
+                    }
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    private IEnumerable<ParticipantDetailsDto>
+        participants =
+            Enumerable.Empty<ParticipantDetailsDto>();
+
+    private IEnumerable<EventDetailsDto>
+        events =
+            Enumerable.Empty<EventDetailsDto>();
+
+    private int selectedParticipantId;
+
+    private int selectedEventId;
+
+    private string message = string.Empty;
+
+    private bool isSuccess;
+
+    private bool isSaving;
+
+    private ParticipantDetailsDto?
+        SelectedParticipant =>
+        participants.FirstOrDefault(
+            p => p.Id == selectedParticipantId);
+
+    private EventDetailsDto?
+        SelectedEvent =>
+        events.FirstOrDefault(
+            e => e.Id == selectedEventId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        participants =
+            await ParticipantService
+                .GetAllParticipantsAsync();
+
+        events =
+            await EventService
+                .GetUpcomingEventsAsync();
+    }
+
+    private async Task RegisterParticipant()
+    {
+        message = string.Empty;
+
+        if (selectedParticipantId == 0)
+        {
+            message =
+                "Please select a participant.";
+            return;
+        }
+
+        if (selectedEventId == 0)
+        {
+            message =
+                "Please select an event.";
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            await RegistrationService.RegisterAsync(
+                selectedParticipantId,
+                selectedEventId);
+
+            isSuccess = true;
+
+            await Task.Delay(1500);
+
+            Navigation.NavigateTo("/registrations");
+        }
+        catch (DuplicateRegistrationException)
+        {
+            message = "This participant is already registered for the selected event.";
+        }
+        catch (EventCapacityExceededException)
+        {
+            message = "This event has reached maximum capacity.";
+        }
+        catch (PastEventRegistrationException)
+        {
+            message = "Registrations are not allowed for past events.";
+        }
+        catch (EventNotFoundException)
+        {
+            message = "The selected event could not be found.";
+        }
+        catch (Exception ex)
+        {
+            isSuccess = false;
+            message = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+}

@@ -1,0 +1,208 @@
+
+   PROFESSIONAL IMPROVEMENTS
+
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.section-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+}
+
+/* STAT CARDS */
+
+.stat-card {
+    border: none;
+    border-radius: 18px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    transition: all .3s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,.12);
+    }
+
+    .stat-card h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+/* FORM IMPROVEMENTS */
+
+.form-label {
+    font-weight: 600;
+    color: #334155;
+}
+
+.form-control,
+.form-select {
+    border-radius: 10px;
+    min-height: 48px;
+}
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 .2rem rgba(37,99,235,.15);
+    }
+
+/* VALIDATION */
+
+.validation-message,
+.validation-errors,
+.text-danger {
+    font-size: .9rem;
+    font-weight: 500;
+}
+
+/* TABLES */
+
+.table thead th {
+    font-weight: 600;
+    letter-spacing: .4px;
+}
+
+.table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* STATUS BADGES */
+
+.badge {
+    border-radius: 20px;
+    padding: .55rem .8rem;
+    font-weight: 600;
+}
+
+/* PROGRESS BAR */
+
+.progress {
+    height: 22px;
+    border-radius: 15px;
+}
+
+.progress-bar {
+    font-weight: 600;
+}
+
+/* ALERTS */
+
+.alert {
+    border-radius: 12px;
+}
+
+/* LINKS */
+
+a {
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+/* BUTTONS */
+
+.btn-lg {
+    padding: 12px 24px;
+    font-weight: 600;
+}
+
+.btn-primary:hover,
+.btn-success:hover {
+    transform: translateY(-2px);
+}
+
+/* LOADING SPINNER */
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+.validation-message,
+.text-danger {
+    color: #dc3545;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+input:invalid,
+textarea:invalid,
+select:invalid {
+    border: 2px solid #dc3545;
+}
+
+input:valid,
+textarea:valid,
+select:valid {
+    border: 2px solid #198754;
+}
+
+/* RESPONSIVE */
+
+@media (max-width:768px) {
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .stat-card h1 {
+        font-size: 2rem;
+    }
+}
+
+.validation-message,
+.text-danger {
+    color: #dc3545;
+    font-size: .9rem;
+    font-weight: 500;
+}
+
+input:invalid,
+textarea:invalid,
+select:invalid {
+    border: 2px solid #dc3545;
+}
+
+input:valid,
+textarea:valid,
+select:valid {
+    border: 2px solid #198754;
+}
+
+.dashboard-hero {
+    border-radius: 20px;
+}
+
+.stat-card {
+    transition: all .3s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 30px rgba(0,0,0,.15);
+    }
+
+.progress {
+    height: 24px;
+    border-radius: 15px;
+}
+
+.progress-bar {
+    font-weight: 600;
+}
+
+.table tbody tr:hover {
+    background: #f8fafc;
+}

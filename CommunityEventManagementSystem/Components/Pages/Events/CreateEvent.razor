@@ -1,0 +1,366 @@
+﻿
+@page "/events/create"
+
+@using CommunityEventManagementSystem.DTOs
+@using CommunityEventManagementSystem.Services.Interfaces
+
+@inject IEventService EventService
+@inject IVenueService VenueService
+@inject IActivityService ActivityService
+@inject NavigationManager Navigation
+
+<div class="container mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header bg-primary text-white">
+
+            <h2 class="mb-0">
+                Create New Event
+            </h2>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger shadow-sm">
+
+                    <strong>Error:</strong>
+
+                    @errorMessage
+
+                </div>
+            }
+
+            @if (isSuccess)
+            {
+                <div class="alert alert-success shadow">
+
+                    <h5 class="mb-2">
+                        ✓ Event Created Successfully
+                    </h5>
+
+                    <p class="mb-0">
+                        The event has been added to the system.
+                    </p>
+
+                </div>
+            }
+
+            <EditForm Model="eventDto"
+                      OnValidSubmit="SaveEvent"
+                      FormName="CreateEventForm">
+
+                <DataAnnotationsValidator />
+
+                <ValidationSummary class="alert alert-danger" />
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Event Name *
+                    </label>
+
+                    <InputText class="form-control"
+                               placeholder="Enter event name"
+                               @bind-Value="eventDto.Name" />
+
+                    <ValidationMessage For="@(() => eventDto.Name)" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Event Date *
+                    </label>
+
+                    <InputDate class="form-control"
+                               @bind-Value="eventDto.EventDate" />
+
+                    <ValidationMessage For="@(() => eventDto.EventDate)" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Event Time *
+                    </label>
+
+                    <InputText class="form-control"
+                               placeholder="09:00"
+                               @bind-Value="timeString" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Description *
+                    </label>
+
+                    <InputTextArea class="form-control"
+                                   rows="4"
+                                   @bind-Value="eventDto.Description" />
+
+                    <ValidationMessage For="@(() => eventDto.Description)" />
+
+                    <small class="text-muted">
+                        Characters:
+                        @(eventDto.Description?.Length ?? 0)/500
+                    </small>
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label class="form-label fw-bold">
+                        Maximum Participants *
+                    </label>
+
+                    <InputNumber class="form-control"
+                                 @bind-Value="eventDto.MaximumParticipants" />
+
+                    <ValidationMessage For="@(() => eventDto.MaximumParticipants)" />
+
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Venues</label>
+                    <div class="row">
+                        @foreach (var venue in venues)
+                        {
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="venue-@venue.Id"
+                                           checked="@eventDto.VenueIds.Contains(venue.Id)"
+                                           @onchange="e => ToggleVenue(venue.Id, e)" />
+                                    <label class="form-check-label" for="venue-@venue.Id">
+                                        @venue.Name (@venue.Capacity capacity)
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Activities</label>
+                    <div class="row">
+                        @foreach (var activity in activities)
+                        {
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="activity-@activity.Id"
+                                           checked="@eventDto.ActivityIds.Contains(activity.Id)"
+                                           @onchange="e => ToggleActivity(activity.Id, e)" />
+                                    <label class="form-check-label" for="activity-@activity.Id">
+                                        @activity.Name (@activity.ActivityTypeDisplay)
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="card bg-light border-0 mb-4">
+
+                    <div class="card-body">
+
+                        <h5 class="fw-bold">
+                            Event Preview
+                        </h5>
+
+                        <p class="mb-1">
+
+                            <strong>Name:</strong>
+
+                            @(string.IsNullOrWhiteSpace(eventDto.Name)
+                                                        ? "Not entered"
+                                                        : eventDto.Name)
+
+                        </p>
+
+                        <p class="mb-1">
+
+                            <strong>Date:</strong>
+
+                            @eventDto.EventDate
+
+                        </p>
+
+                        <p class="mb-1">
+
+                            <strong>Time:</strong>
+
+                            @timeString
+
+                        </p>
+
+                        <p class="mb-1">
+
+                            <strong>Capacity:</strong>
+
+                            @eventDto.MaximumParticipants
+
+                        </p>
+
+                        <p class="mb-0">
+
+                            <strong>Category:</strong>
+
+                            @EventCategory
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-success btn-lg"
+                            disabled="@isSaving">
+
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2">
+                            </span>
+
+                            <span>Creating...</span>
+                        }
+                        else
+                        {
+                            <span>Create Event</span>
+                        }
+
+                    </button>
+
+                    <a href="/events"
+                       class="btn btn-outline-secondary btn-lg">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </EditForm>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    private CreateEventDto eventDto = new()
+    {
+        EventDate = DateOnly.FromDateTime(DateTime.Today),
+        MaximumParticipants = 50
+    };
+
+    private string timeString = "09:00";
+
+    private string errorMessage = string.Empty;
+
+    private bool isSuccess;
+
+    private bool isSaving;
+
+    private IEnumerable<VenueDetailsDto> venues = Enumerable.Empty<VenueDetailsDto>();
+    private IEnumerable<ActivityDetailsDto> activities = Enumerable.Empty<ActivityDetailsDto>();
+
+    private string EventCategory =>
+        eventDto.MaximumParticipants switch
+        {
+            >= 500 => "Large Event",
+            >= 100 => "Medium Event",
+            _ => "Small Event"
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        venues = await VenueService.GetAllVenuesAsync();
+        activities = await ActivityService.GetAllActivitiesAsync();
+    }
+
+    private void ToggleVenue(int venueId, ChangeEventArgs e)
+    {
+        var isChecked = (bool?)e.Value == true;
+
+        if (isChecked && !eventDto.VenueIds.Contains(venueId))
+        {
+            eventDto.VenueIds.Add(venueId);
+        }
+        else if (!isChecked)
+        {
+            eventDto.VenueIds.Remove(venueId);
+        }
+    }
+
+    private void ToggleActivity(int activityId, ChangeEventArgs e)
+    {
+        var isChecked = (bool?)e.Value == true;
+
+        if (isChecked && !eventDto.ActivityIds.Contains(activityId))
+        {
+            eventDto.ActivityIds.Add(activityId);
+        }
+        else if (!isChecked)
+        {
+            eventDto.ActivityIds.Remove(activityId);
+        }
+    }
+
+    private async Task SaveEvent()
+    {
+        errorMessage = string.Empty;
+
+        isSaving = true;
+
+        if (!TimeOnly.TryParse(timeString, out var parsedTime))
+        {
+            errorMessage =
+                "Invalid time format. Example: 09:00";
+
+            isSaving = false;
+
+            return;
+        }
+
+        eventDto.EventTime = parsedTime;
+
+        try
+        {
+            await EventService.CreateEventAsync(eventDto);
+
+            isSuccess = true;
+
+            await Task.Delay(1500);
+
+            Navigation.NavigateTo("/events");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+}
+

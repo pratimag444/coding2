@@ -1,0 +1,315 @@
+﻿@page "/registrations"
+
+@using CommunityEventManagementSystem.DTOs
+@using CommunityEventManagementSystem.Services.Interfaces
+
+@inject IRegistrationService RegistrationService
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+
+            <div class="card-body text-center">
+
+                <i class="bi bi-people-fill display-5 text-primary"></i>
+
+                <h6 class="text-muted mt-3">
+                    Total Registrations
+                </h6>
+
+                <h1 class="fw-bold">
+                    @RegistrationCount
+                </h1>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+
+            <div class="card-body text-center">
+
+                <i class="bi bi-check-circle-fill display-5 text-success"></i>
+
+                <h6 class="text-muted mt-3">
+                    Confirmed
+                </h6>
+
+                <h1 class="fw-bold text-success">
+                    @ConfirmedCount
+                </h1>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+
+            <div class="card-body text-center">
+
+                <i class="bi bi-hourglass-split display-5 text-warning"></i>
+
+                <h6 class="text-muted mt-3">
+                    Pending
+                </h6>
+
+                <h1 class="fw-bold text-warning">
+                    @PendingCount
+                </h1>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+
+            <div class="card-body text-center">
+
+                <i class="bi bi-x-circle-fill display-5 text-danger"></i>
+
+                <h6 class="text-muted mt-3">
+                    Cancelled
+                </h6>
+
+                <h1 class="fw-bold text-danger">
+                    @CancelledCount
+                </h1>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+    <select class="form-select mt-3"
+            @bind="selectedStatus">
+
+        <option value="">
+            All Statuses
+        </option>
+
+        <option value="Confirmed">
+            Confirmed
+        </option>
+
+        <option value="Pending">
+            Pending
+        </option>
+
+        <option value="Cancelled">
+            Cancelled
+        </option>
+
+    </select>
+
+    <div class="card shadow border-0">
+
+        <div class="card-body">
+
+            @if (registrations == null)
+            {
+                <div class="text-center p-5">
+
+                    <div class="spinner-border text-primary">
+                    </div>
+
+                    <p class="mt-3">
+                        Loading registrations...
+                    </p>
+
+                </div>
+            }
+            else if (!FilteredRegistrations.Any())
+            {
+                <div class="alert alert-warning">
+                    No registrations found.
+                </div>
+            }
+            else
+            {
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Participant</th>
+                            <th>Event</th>
+                            <th>Registration Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var registration in FilteredRegistrations)
+                        {
+                            <tr>
+
+                                <td>
+                                    @registration.Id
+                                </td>
+
+                                <td class="fw-bold">
+                                    @registration.ParticipantName
+                                </td>
+
+                                <td>
+                                    @registration.EventName
+                                </td>
+
+                                <td>
+                                    @registration.RegistrationDateDisplay
+                                </td>
+
+                                <td>
+
+                                    @if (registration.IsConfirmed)
+                                    {
+                                        <span class="badge bg-success">
+                                            Confirmed
+                                        </span>
+                                    }
+                                    else if (registration.IsPending)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Pending
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            Cancelled
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+                                    @if (registration.IsPending)
+                                    {
+                                        <button class="btn btn-sm btn-success me-1"
+                                                @onclick="() => ConfirmRegistration(registration.Id)">
+                                            Confirm
+                                        </button>
+                                    }
+
+                                    @if (!registration.IsCancelled)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => CancelRegistration(registration.Id)">
+                                            Cancel
+                                        </button>
+                                    }
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+            }
+
+        </div>
+
+    </div>
+
+
+
+@code {
+    private string selectedStatus = string.Empty;
+
+
+    private IEnumerable<RegistrationDetailsDto>? registrations;
+
+    private string searchText = string.Empty;
+    private string? actionMessage;
+
+    private int RegistrationCount =>
+        registrations?.Count() ?? 0;
+
+    private int ConfirmedCount =>
+        registrations?.Count(r => r.IsConfirmed) ?? 0;
+
+    private int PendingCount =>
+        registrations?.Count(r => r.IsPending) ?? 0;
+
+    private int CancelledCount =>
+        registrations?.Count(r => r.IsCancelled) ?? 0;
+
+    private IEnumerable<RegistrationDetailsDto>
+        FilteredRegistrations =>
+        registrations?
+        .Where(r =>
+            string.IsNullOrWhiteSpace(searchText)
+            ||
+            r.ParticipantName.Contains(
+                searchText,
+                StringComparison.OrdinalIgnoreCase)
+            ||
+            r.EventName.Contains(
+                searchText,
+                StringComparison.OrdinalIgnoreCase))
+        ??
+        Enumerable.Empty<RegistrationDetailsDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRegistrationsAsync();
+    }
+
+    private async Task LoadRegistrationsAsync()
+    {
+        registrations =
+            await RegistrationService
+                .GetAllRegistrationsAsync();
+    }
+
+    private async Task ConfirmRegistration(int id)
+    {
+        try
+        {
+            await RegistrationService.ConfirmRegistrationAsync(id);
+            actionMessage = "Registration confirmed.";
+            await LoadRegistrationsAsync();
+        }
+        catch (Exception ex)
+        {
+            actionMessage = ex.Message;
+        }
+    }
+
+    private async Task CancelRegistration(int id)
+    {
+        try
+        {
+            await RegistrationService.CancelRegistrationAsync(id);
+            actionMessage = "Registration cancelled.";
+            await LoadRegistrationsAsync();
+        }
+        catch (Exception ex)
+        {
+            actionMessage = ex.Message;
+        }
+    }
+}

@@ -1,0 +1,240 @@
+﻿@page "/participants/create"
+
+@using CommunityEventManagementSystem.DTOs
+@using CommunityEventManagementSystem.Services.Interfaces
+
+@inject IParticipantService ParticipantService
+@inject NavigationManager Navigation
+
+<div class="container mt-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-8">
+
+            <div class="card shadow-lg border-0">
+
+                <div class="card-header bg-primary text-white py-3">
+
+                    <h2 class="mb-0">
+                        Create Participant
+                    </h2>
+
+                </div>
+
+                <div class="card-body p-4">
+
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert alert-danger shadow-sm">
+                            @errorMessage
+                        </div>
+                    }
+
+                    @if (isSuccess)
+                    {
+                        <div class="alert alert-success shadow">
+
+                            <h5 class="mb-2">
+                                ✓ Participant Created Successfully
+                            </h5>
+
+                            <p class="mb-0">
+                                The participant has been added to the system.
+                            </p>
+
+                        </div>
+                    }
+
+                    <EditForm Model="participantDto"
+                              OnValidSubmit="SaveParticipant"
+                              FormName="CreateParticipantForm">
+
+                        <DataAnnotationsValidator />
+
+                        <ValidationSummary class="alert alert-danger" />
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+                                    First Name *
+                                </label>
+
+                                <InputText class="form-control"
+                                           placeholder="Enter first name"
+                                           @bind-Value="participantDto.FirstName" />
+
+                                <ValidationMessage For="@(() => participantDto.FirstName)" />
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+                                    Last Name *
+                                </label>
+
+                                <InputText class="form-control"
+                                           placeholder="Enter last name"
+                                           @bind-Value="participantDto.LastName" />
+
+                                <ValidationMessage For="@(() => participantDto.LastName)" />
+
+                            </div>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-bold">
+                                Email Address *
+                            </label>
+
+                            <InputText class="form-control"
+                                       placeholder="example@email.com"
+                                       @bind-Value="participantDto.Email" />
+
+                            <ValidationMessage For="@(() => participantDto.Email)" />
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-bold">
+                                Phone Number *
+                            </label>
+
+                            <InputText class="form-control"
+                                       placeholder="+977-98XXXXXXXX"
+                                       @bind-Value="participantDto.PhoneNumber" />
+
+                            <ValidationMessage For="@(() => participantDto.PhoneNumber)" />
+
+                        </div>
+
+                        <hr />
+
+                        <div class="card bg-light border-0 mb-4">
+
+                            <div class="card-body">
+
+                                <h5 class="fw-bold">
+                                    Participant Preview
+                                </h5>
+
+                                <p class="mb-1">
+
+                                    <strong>Full Name:</strong>
+
+                                    @(string.IsNullOrWhiteSpace(participantDto.FirstName)
+                                                                        && string.IsNullOrWhiteSpace(participantDto.LastName)
+                                                                        ? "Not entered"
+                                                                        : $"{participantDto.FirstName} {participantDto.LastName}")
+
+                                </p>
+
+                                <p class="mb-1">
+
+                                    <strong>Email:</strong>
+
+                                    @(string.IsNullOrWhiteSpace(participantDto.Email)
+                                                                        ? "Not entered"
+                                                                        : participantDto.Email)
+
+                                </p>
+
+                                <p class="mb-0">
+
+                                    <strong>Phone:</strong>
+
+                                    @(string.IsNullOrWhiteSpace(participantDto.PhoneNumber)
+                                                                        ? "Not entered"
+                                                                        : participantDto.PhoneNumber)
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex gap-2">
+
+                            <button type="submit"
+                                    class="btn btn-success btn-lg"
+                                    disabled="@isSaving">
+
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2">
+                                    </span>
+
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Save Participant</span>
+                                }
+
+                            </button>
+
+                            <a href="/participants"
+                               class="btn btn-outline-secondary btn-lg">
+
+                                Cancel
+
+                            </a>
+
+                        </div>
+
+                    </EditForm>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    private CreateParticipantDto participantDto = new();
+
+    private string errorMessage = string.Empty;
+
+    private bool isSuccess;
+
+    private bool isSaving;
+
+    private async Task SaveParticipant()
+    {
+        errorMessage = string.Empty;
+
+        isSaving = true;
+
+        try
+        {
+            await ParticipantService
+                .CreateParticipantAsync(participantDto);
+
+            isSuccess = true;
+
+            await Task.Delay(1500);
+
+            Navigation.NavigateTo("/participants");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+}

@@ -1,20 +1,32 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+
+@using Blazored.Toast
 
 <div class="page">
     <div class="sidebar">
+        <div class="px-3 mb-3">
+            <a class="navbar-brand d-block fs-5 fw-bold text-white" href="/">CEMS</a>
+            <div class="text-white-50 small">Community Event Management</div>
+        </div>
         <NavMenu />
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row d-flex justify-content-end align-items-center mb-3">
+            <a href="#" class="me-3 text-muted">About</a>
         </div>
 
-        <article class="content px-4">
+        <article class="content">
             @Body
         </article>
+
+        <footer class="footer mt-4">
+            <small>© @DateTime.Now.Year Community Event Management — Built for CET254</small>
+        </footer>
     </main>
 </div>
+
+<BlazoredToast />
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

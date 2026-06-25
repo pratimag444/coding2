@@ -5,6 +5,7 @@ using CommunityEventManagementSystem.Repositories.Implementations;
 using CommunityEventManagementSystem.Services.Interfaces;
 using CommunityEventManagementSystem.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
+using Blazored.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (!string.IsNullOrWhiteSpace(defaultConn) && defaultConn != "UseInMemory")
     {
-        // Use SQLite for demo or SQL Server if you prefer (change to UseSqlServer when needed)
         options.UseSqlite(defaultConn);
     }
     else
@@ -41,8 +41,8 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IVenueService, VenueService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 
-// Optional: add Blazored.Toast for notifications (if confirmed)
-// builder.Services.AddBlazoredToast();
+// Blazored.Toast for nice toasts
+builder.Services.AddBlazoredToast();
 
 var app = builder.Build();
 
@@ -50,7 +50,6 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    // For relational DB ensure migrations are applied when demo uses SQLite (optional)
     try
     {
         if (context.Database.IsRelational())
@@ -62,7 +61,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        // Log during startup (replace with proper logger if added)
         Console.WriteLine($"Error during DB setup: {ex.Message}");
         throw;
     }

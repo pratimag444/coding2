@@ -1,0 +1,26 @@
+@page "/"
+@namespace CommunityEventManagementSystem.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="~/" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="~/css/app.css" rel="stylesheet" />
+
+    <title>Community Event Management</title>
+</head>
+<body>
+    <app>
+        <component type="typeof(CommunityEventManagementSystem.Components.App)" render-mode="ServerPrerendered" />
+    </app>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-" crossorigin="anonymous"></script>
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

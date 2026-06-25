@@ -1,0 +1,46 @@
+# Ignore Visual Studio temporary files, build results, and user-specific files
+.vs/
+.vscode/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+.packages
+
+# Visual Studio cache/options
+ipch/
+*.VC.db
+*.VC.VC.opendb
+
+# Rider
+.idea/
+
+# Logs
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Publish output
+publish/
+
+# Node
+node_modules/
+
+# Secrets
+secrets.json
+appsettings.*.Local.json
+
+# Ignore workspace files committed by Visual Studio
+.vs/CommunityEventManagementSystem/
+.vs/**
+
+# Do not ignore the solution file and project files
+!/*.sln
+!/**/*.csproj

@@ -1,25 +1,12 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@namespace CommunityEventManagementSystem.Components
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
-
-    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="CommunityEventManagementSystem.styles.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-
-    <HeadOutlet @rendermode="InteractiveServer" />
-</head>
-
-<body>
-
-    <Routes @rendermode="InteractiveServer" />
-
-    <script src="_framework/blazor.web.js"></script>
-
-</body>
-
-</html>
+<Router AppAssembly="@typeof(CommunityEventManagementSystem.Components.App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="typeof(CommunityEventManagementSystem.Components.Layout.MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(CommunityEventManagementSystem.Components.Layout.MainLayout)">
+            <p class="m-4">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

@@ -1,5 +1,3 @@
-
-using CommunityEventManagementSystem.Components;
 using CommunityEventManagementSystem.Data;
 using CommunityEventManagementSystem.Data.SeedData;
 using CommunityEventManagementSystem.Repositories.Interfaces;
@@ -10,47 +8,77 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+// UI libraries & static assets
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
 
+// Configure EF Core: use SQLite if DefaultConnection provided, otherwise InMemory for dev/tests
+var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (!string.IsNullOrWhiteSpace(defaultConn) && defaultConn != "UseInMemory")
+    {
+        // Use SQLite for demo or SQL Server if you prefer (change to UseSqlServer when needed)
+        options.UseSqlite(defaultConn);
+    }
+    else
+    {
+        options.UseInMemoryDatabase("CEMS_InMemory");
+    }
+});
 
+// Register repositories
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IParticipantRepository, ParticipantRepository>();
 builder.Services.AddScoped<IRegistrationRepository, RegistrationRepository>();
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 
+// Register services
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IParticipantService, ParticipantService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IVenueService, VenueService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 
+// Optional: add Blazored.Toast for notifications (if confirmed)
+// builder.Services.AddBlazoredToast();
+
 var app = builder.Build();
 
+// Ensure DB is created and seeded (safe for InMemory or SQLite)
 using (var scope = app.Services.CreateScope())
 {
-    var context =
-        scope.ServiceProvider
-            .GetRequiredService<ApplicationDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    // For relational DB ensure migrations are applied when demo uses SQLite (optional)
+    try
+    {
+        if (context.Database.IsRelational())
+        {
+            context.Database.EnsureCreated();
+        }
 
-    await DbSeeder.SeedAsync(context);
+        await DbSeeder.SeedAsync(context);
+    }
+    catch (Exception ex)
+    {
+        // Log during startup (replace with proper logger if added)
+        Console.WriteLine($"Error during DB setup: {ex.Message}");
+        throw;
+    }
 }
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseAntiforgery();
+app.UseRouting();
 
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();
